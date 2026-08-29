@@ -32,6 +32,13 @@ export class Transaction {
 
   @Prop({ type: String, trim: true, maxlength: 1000 })
   note?: string;
+
+  /** Serialized proof image/document supplied by the user (JSON text). */
+  @Prop({ type: String })
+  proofPaymentDocument?: string;
+
+  @Prop({ type: Types.ObjectId, ref: 'PaymentOrder', index: true })
+  orderId?: Types.ObjectId;
 }
 
 export const TransactionSchema = SchemaFactory.createForClass(Transaction);

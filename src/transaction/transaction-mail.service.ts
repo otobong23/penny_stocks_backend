@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { TransactionDocument } from './schemas/transaction.schema';
+import { PaymentOrderDocument } from './schemas/payment-order.schema';
 
 const nodemailer = require('nodemailer');
 
@@ -51,5 +52,19 @@ export class TransactionMailService {
       `Your ${transaction.type} transaction is complete`,
       `Your ${transaction.type} transaction has been completed.\n\nTransaction: ${transaction.transactionID}\nAmount: ${transaction.amount} ${transaction.currency}\nStatus: ${transaction.status}`,
     );
+  }
+
+  async sendOrderActivityToAdmin(order: PaymentOrderDocument, activity: string) {
+    if (!this.adminEmail) {
+      this.logger.warn('ADMIN_EMAIL or OWNER_EMAIL is not configured; skipped order email');
+      return false;
+    }
+    return this.send(this.adminEmail, `${order.type} order ${activity}: ${order.orderID}`,
+      `A ${order.type} order has been ${activity}.\n\nOrder: ${order.orderID}\nUser: ${order.email}\nAmount: ${order.amount} USD\nMethod: ${order.method}\nStatus: ${order.status}`);
+  }
+
+  async sendOrderActivityToUser(order: PaymentOrderDocument, activity: string) {
+    return this.send(order.email, `Your ${order.type} order is ${activity}`,
+      `Your ${order.type} order has been ${activity}.\n\nOrder: ${order.orderID}\nAmount: ${order.amount} USD\nMethod: ${order.method}\nStatus: ${order.status}${order.methodDetails ? `\nMethod details: ${order.methodDetails}` : ''}`);
   }
 }

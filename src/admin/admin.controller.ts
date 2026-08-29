@@ -7,6 +7,7 @@ import { PaginationDto } from '../common/dto/pagination.dto';
 import { UpdateTransactionStatusDto } from './dto/update-transaction-status.dto';
 import { UpdateUserAdministrationDto } from './dto/update-user-administration.dto';
 import { AdminService } from './admin.service';
+import { UpdatePaymentOrderDto } from './dto/update-payment-order.dto';
 
 @Controller('admin')
 export class AdminController {
@@ -30,4 +31,12 @@ export class AdminController {
   @Patch('transactions/:id/status')
   @UseGuards(JwtAuthGuard, AdminGuard)
   updateTransactionStatus(@Param('id') id: string, @Body() dto: UpdateTransactionStatusDto) { return this.adminService.updateTransactionStatus(id, dto); }
+
+  @Get('payment-orders')
+  @UseGuards(JwtAuthGuard, AdminGuard)
+  paymentOrders() { return this.adminService.findPaymentOrders(); }
+
+  @Patch('payment-orders/:id')
+  @UseGuards(JwtAuthGuard, AdminGuard)
+  updatePaymentOrder(@Param('id') id: string, @Body() dto: UpdatePaymentOrderDto) { return this.adminService.updatePaymentOrder(id, dto); }
 }
