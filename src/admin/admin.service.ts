@@ -6,10 +6,12 @@ import { User, UserDocument } from '../common/schemas/user/user.schema';
 import { Transaction, TransactionDocument } from '../transaction/schemas/transaction.schema';
 import { UpdateTransactionStatusDto } from './dto/update-transaction-status.dto';
 import { UpdateUserAdministrationDto } from './dto/update-user-administration.dto';
+import { TransactionMailService } from 'src/transaction/transaction-mail.service';
+import { TransactionType } from 'src/transaction/enum/transaction-type.enum';
 
 @Injectable()
 export class AdminService {
-  constructor(@InjectModel(User.name) private readonly userModel: Model<UserDocument>, @InjectModel(Transaction.name) private readonly transactionModel: Model<TransactionDocument>) {}
+  constructor(@InjectModel(User.name) private readonly userModel: Model<UserDocument>, @InjectModel(Transaction.name) private readonly transactionModel: Model<TransactionDocument>, private readonly transactionMailService: TransactionMailService) { }
 
   async findUsers(pagination: PaginationDto) {
     const page = pagination.page ?? 1; const limit = pagination.limit ?? 20;
@@ -32,6 +34,9 @@ export class AdminService {
   async updateTransactionStatus(id: string, dto: UpdateTransactionStatusDto) {
     const transaction = await this.transactionModel.findByIdAndUpdate(id, dto, { new: true, runValidators: true });
     if (!transaction) throw new NotFoundException('Transaction not found');
+    if ([TransactionType.DEPOSIT, TransactionType.WITHDRAW].includes(transaction.type)) {
+      await this.transactionMailService.sendPendingTransactionToAdmin(transaction);
+    }
     return transaction;
   }
 }
