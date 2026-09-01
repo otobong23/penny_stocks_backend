@@ -3,7 +3,7 @@ import { ValidationPipe } from '@nestjs/common';
 import { AppModule } from './app.module';
 import { config } from 'dotenv';
 import * as bodyParser from 'body-parser';
-config()
+config();
 
 const port = process.env.PORT || 4000;
 

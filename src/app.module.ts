@@ -7,12 +7,12 @@ import { PassportModule } from '@nestjs/passport';
 import { JwtModule } from '@nestjs/jwt';
 
 import { configDotenv } from 'dotenv';
-// import { AuthModule } from './auth/auth.module';
-// import { UserModule } from './user/user.module';
-// import { TransactionModule } from './transaction/transaction.module';
-// import { StockModule } from './stock/stock.module';
-// import { CopyTradingModule } from './copy-trading/copy-trading.module';
-// import { AdminModule } from './admin/admin.module';
+import { AuthModule } from './auth/auth.module';
+import { UserModule } from './user/user.module';
+import { TransactionModule } from './transaction/transaction.module';
+import { StockModule } from './stock/stock.module';
+import { CopyTradingModule } from './copy-trading/copy-trading.module';
+import { AdminModule } from './admin/admin.module';
 configDotenv()
 
 @Module({
@@ -25,12 +25,12 @@ configDotenv()
       secret: process.env.JWT_SECRET!,
       signOptions: { expiresIn: '30d' },
     }),
-    // AuthModule,
-    // UserModule,
-    // TransactionModule,
-    // StockModule,
-    // CopyTradingModule,
-    // AdminModule,
+    AuthModule,
+    UserModule,
+    TransactionModule,
+    StockModule,
+    CopyTradingModule,
+    AdminModule,
   ],
   controllers: [AppController],
   providers: [AppService],
