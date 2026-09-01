@@ -87,7 +87,8 @@ UserSchema.statics.search = function (keyword: string) {
     $or: [
       { userID: pattern },
       { email: pattern },
-      { fullName: pattern },
+      { firstName: pattern },
+      { lastName: pattern },
       { phone: pattern },
     ],
   });
