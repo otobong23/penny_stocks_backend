@@ -5,7 +5,8 @@ import { config } from 'dotenv';
 import * as bodyParser from 'body-parser';
 config();
 
-const port = process.env.PORT || 4000;
+const port = process.env.PORT || 5000;
+console.log(`Starting server on port ${port}...`)
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
