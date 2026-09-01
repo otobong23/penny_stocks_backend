@@ -1,9 +1,9 @@
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { AppModule } from './app.module';
-import { config } from 'dotenv';
+import * as dotenv from 'dotenv';
 import * as bodyParser from 'body-parser';
-config();
+dotenv.config();
 
 const port = process.env.PORT || 5000;
 console.log(`Starting server on port ${port}...`)
