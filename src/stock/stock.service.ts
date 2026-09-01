@@ -10,6 +10,7 @@ import { CreateStockDto } from './dto/create-stock.dto';
 import { UpdateStockDto } from './dto/update-stock.dto';
 import { Stock, StockDocument } from './schemas/stock.schema';
 import { StockPurchase, StockPurchaseDocument } from './schemas/stock-purchase.schema';
+import { PaginationDto } from 'src/common/dto/pagination.dto';
 
 @Injectable()
 export class StockService {
@@ -21,7 +22,16 @@ export class StockService {
     @InjectConnection() private readonly connection: Connection,
   ) {}
 
-  findAll() { return this.stockModel.find().sort({ acronym: 1 }); }
+  async findAll(pagination: PaginationDto) {
+    const page = pagination.page ?? 1;
+    const limit = pagination.limit ?? 20;
+    const [data, total] = await Promise.all([
+      this.stockModel.find().sort({ createdAt: -1 }).skip((page - 1) * limit).limit(limit),
+      this.stockModel.countDocuments(),
+    ]);
+    // return this.stockModel.find().sort({ acronym: 1 });
+    return { data, pagination: { page, limit, total, totalPages: Math.ceil(total / limit) } };
+  }
 
   async findOne(id: string) {
     const stock = await this.stockModel.findById(id);

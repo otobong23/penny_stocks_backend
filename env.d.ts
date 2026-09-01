@@ -21,9 +21,6 @@ declare namespace NodeJS {
     APPLE_CLIENT_ID?: string;
     PASSWORD_RESET_URL?: string;
 
-    BLOCKONOMICS_API_KEY: string;
-    BLOCKONOMICS_CALLBACK_SECRET: string;
-
     NODE_ENV: "development" | "production" | "test";
   }
 }
