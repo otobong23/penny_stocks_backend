@@ -1,4 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { TransactionDocument } from './schemas/transaction.schema';
 import { PaymentOrderDocument } from './schemas/payment-order.schema';
 
@@ -12,21 +13,26 @@ const nodemailer = require('nodemailer');
 export class TransactionMailService {
   private readonly logger = new Logger(TransactionMailService.name);
 
-  private get adminEmail() { return process.env.ADMIN_EMAIL || process.env.OWNER_EMAIL; }
+  constructor(private readonly configService: ConfigService) {}
+
+  private get adminEmail() { return this.configService.get<string>('ADMIN_EMAIL') || this.configService.get<string>('OWNER_EMAIL'); }
 
   private async send(to: string, subject: string, text: string) {
-    if (!process.env.EMAIL_HOST || !process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
+    const host = this.configService.get<string>('EMAIL_HOST');
+    const user = this.configService.get<string>('EMAIL_USER');
+    const pass = this.configService.get<string>('EMAIL_PASS');
+    if (!host || !user || !pass) {
       this.logger.warn(`SMTP is not configured; skipped transaction email: ${subject}`);
       return false;
     }
     try {
-      const port = Number(process.env.EMAIL_PORT || 587);
+      const port = this.configService.get<number>('EMAIL_PORT', 587);
       await nodemailer.createTransport({
-        host: process.env.EMAIL_HOST,
+        host,
         port,
         secure: port === 465,
-        auth: { user: process.env.EMAIL_USER, pass: process.env.EMAIL_PASS },
-      }).sendMail({ from: process.env.EMAIL_USER, to, subject, text });
+        auth: { user, pass },
+      }).sendMail({ from: user, to, subject, text });
       return true;
     } catch (error) {
       this.logger.error(`Failed to send transaction email: ${subject}`, error instanceof Error ? error.stack : undefined);

@@ -1,6 +1,7 @@
 import { Injectable, UnauthorizedException } from "@nestjs/common";
 import { PassportStrategy } from "@nestjs/passport";
 import { Strategy, ExtractJwt } from "passport-jwt";
+import { ConfigService } from '@nestjs/config';
 
 
 @Injectable()
@@ -8,10 +9,10 @@ export default class ResetPasswordStrategy extends PassportStrategy(
   Strategy,
   'jwt-reset-password'
 ) {
-  constructor() {
+  constructor(configService: ConfigService) {
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
-      secretOrKey: process.env.JWT_RESET_SECRET,
+      secretOrKey: configService.getOrThrow<string>('JWT_RESET_SECRET'),
       ignoreExpiration: false,
     });
   }

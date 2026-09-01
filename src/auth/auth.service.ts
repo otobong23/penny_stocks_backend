@@ -1,5 +1,6 @@
 import { BadRequestException, ConflictException, Injectable, InternalServerErrorException, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
+import { ConfigService } from '@nestjs/config';
 import { InjectModel } from '@nestjs/mongoose';
 import { OAuth2Client } from 'google-auth-library';
 import { Model } from 'mongoose';
@@ -17,7 +18,8 @@ export class AuthService {
   constructor(
     @InjectModel(User.name) private readonly userModel: Model<UserDocument>,
     private readonly jwtService: JwtService,
-    private readonly googleClient: OAuth2Client
+    private readonly googleClient: OAuth2Client,
+    private readonly configService: ConfigService,
   ) {}
 
   private hash(value: string) { return crypto.createHash('sha256').update(value).digest('hex'); }
@@ -26,8 +28,8 @@ export class AuthService {
   private async issueTokens(user: UserDocument) {
     const payload = { sub: String(user._id), userID: user.userID, email: user.email };
     const [accessToken, refreshToken] = await Promise.all([
-      this.jwtService.signAsync(payload, { expiresIn: (process.env.JWT_ACCESS_EXPIRATION || '15m') as any }),
-      this.jwtService.signAsync(payload, { secret: process.env.JWT_REFRESH_SECRET || process.env.JWT_SECRET, expiresIn: (process.env.JWT_REFRESH_EXPIRATION || '7d') as any }),
+      this.jwtService.signAsync(payload, { expiresIn: (this.configService.get<string>('JWT_ACCESS_EXPIRATION') || '15m') as any }),
+      this.jwtService.signAsync(payload, { secret: this.configService.get<string>('JWT_REFRESH_SECRET') || this.configService.getOrThrow<string>('JWT_SECRET'), expiresIn: (this.configService.get<string>('JWT_REFRESH_EXPIRATION') || '7d') as any }),
     ]);
     user.refreshToken = this.hash(refreshToken);
     await user.save();
@@ -59,9 +61,10 @@ export class AuthService {
   }
 
   async googleSignIn(dto: ProviderSignInDto) {
-    if (!process.env.GOOGLE_CLIENT_ID) throw new InternalServerErrorException('Google sign-in is not configured');
+    const googleClientId = this.configService.get<string>('GOOGLE_CLIENT_ID');
+    if (!googleClientId) throw new InternalServerErrorException('Google sign-in is not configured');
     let payload: { sub?: string; email?: string; email_verified?: boolean; given_name?: string; family_name?: string } | undefined;
-    try { payload = (await this.googleClient.verifyIdToken({ idToken: dto.idToken, audience: process.env.GOOGLE_CLIENT_ID })).getPayload(); }
+    try { payload = (await this.googleClient.verifyIdToken({ idToken: dto.idToken, audience: googleClientId })).getPayload(); }
     catch { throw new UnauthorizedException('Invalid Google ID token'); }
     if (!payload?.sub || !payload.email || !payload.email_verified) throw new UnauthorizedException('Google account email is not verified');
     return this.upsertProviderUser(AuthProvider.GOOGLE, payload.sub, payload.email, dto.firstName || payload.given_name, dto.lastName || payload.family_name);
@@ -93,14 +96,15 @@ export class AuthService {
     const user = await this.userModel.findOne({ email: dto.email }).select('+passwordResetTokenHash +passwordResetExpiresAt');
     if (!user) return response;
     const jti = crypto.randomUUID();
-    const token = await this.jwtService.signAsync({ sub: String(user._id), email: user.email, purpose: 'password-reset', jti }, { secret: process.env.JWT_RESET_SECRET || process.env.JWT_SECRET, expiresIn: '1h' });
+    const token = await this.jwtService.signAsync({ sub: String(user._id), email: user.email, purpose: 'password-reset', jti }, { secret: this.configService.getOrThrow<string>('JWT_RESET_SECRET'), expiresIn: '1h' });
     user.passwordResetTokenHash = this.hash(jti); user.passwordResetExpiresAt = new Date(Date.now() + 3600000); await user.save();
-    if (process.env.EMAIL_HOST) {
+    const emailHost = this.configService.get<string>('EMAIL_HOST');
+    if (emailHost) {
       try {
-        const port = Number(process.env.EMAIL_PORT || 587);
-        const resetUrl = `${process.env.PASSWORD_RESET_URL || 'http://localhost:3000/reset-password'}?token=${encodeURIComponent(token)}`;
-        await nodemailer.createTransport({ host: process.env.EMAIL_HOST, port, secure: port === 465, auth: { user: process.env.EMAIL_USER, pass: process.env.EMAIL_PASS } }).sendMail({
-          from: process.env.EMAIL_USER,
+        const port = this.configService.get<number>('EMAIL_PORT', 587);
+        const resetUrl = `${this.configService.get<string>('PASSWORD_RESET_URL', 'http://localhost:3000/reset-password')}?token=${encodeURIComponent(token)}`;
+        await nodemailer.createTransport({ host: emailHost, port, secure: port === 465, auth: { user: this.configService.getOrThrow<string>('EMAIL_USER'), pass: this.configService.getOrThrow<string>('EMAIL_PASS') } }).sendMail({
+          from: this.configService.getOrThrow<string>('EMAIL_USER'),
           to: user.email,
           subject: 'Reset your password',
           text: `Use this link within one hour to reset your password: ${resetUrl}`,
@@ -113,13 +117,13 @@ export class AuthService {
       }
     }
     // A local/test caller can use this token without an SMTP server.
-    if (process.env.NODE_ENV !== 'production') response.resetToken = token;
+    if (this.configService.get<string>('NODE_ENV') !== 'production') response.resetToken = token;
     return response;
   }
 
   async resetPassword(dto: ResetPasswordDto) {
     let payload: { sub: string; purpose: string; jti: string };
-    try { payload = await this.jwtService.verifyAsync(dto.token, { secret: process.env.JWT_RESET_SECRET || process.env.JWT_SECRET }); } catch { throw new UnauthorizedException('Invalid or expired reset token'); }
+    try { payload = await this.jwtService.verifyAsync(dto.token, { secret: this.configService.getOrThrow<string>('JWT_RESET_SECRET') }); } catch { throw new UnauthorizedException('Invalid or expired reset token'); }
     if (payload.purpose !== 'password-reset' || !payload.jti) throw new UnauthorizedException('Invalid reset token');
     const user = await this.userModel.findById(payload.sub).select('+passwordResetTokenHash +passwordResetExpiresAt');
     if (!user || !user.passwordResetExpiresAt || user.passwordResetExpiresAt <= new Date() || user.passwordResetTokenHash !== this.hash(payload.jti)) throw new UnauthorizedException('Invalid or expired reset token');
@@ -129,7 +133,7 @@ export class AuthService {
 
   async refresh(dto: RefreshTokenDto) {
     let payload: { sub: string };
-    try { payload = await this.jwtService.verifyAsync(dto.refreshToken, { secret: process.env.JWT_REFRESH_SECRET || process.env.JWT_SECRET }); } catch { throw new UnauthorizedException('Invalid or expired refresh token'); }
+    try { payload = await this.jwtService.verifyAsync(dto.refreshToken, { secret: this.configService.get<string>('JWT_REFRESH_SECRET') || this.configService.getOrThrow<string>('JWT_SECRET') }); } catch { throw new UnauthorizedException('Invalid or expired refresh token'); }
     const user = await this.userModel.findById(payload.sub).select('+refreshToken');
     if (!user || user.refreshToken !== this.hash(dto.refreshToken)) throw new UnauthorizedException('Refresh token is no longer valid');
     return this.authResponse(user, 'Token refreshed');
@@ -143,7 +147,7 @@ export class AuthService {
     let header: { kid?: string; alg?: string }; let claims: AppleClaims;
     try { header = JSON.parse(Buffer.from(encodedHeader, 'base64url').toString()); claims = JSON.parse(Buffer.from(encodedClaims, 'base64url').toString()); } catch { throw new UnauthorizedException('Invalid Apple ID token'); }
     if (header.alg !== 'RS256' || !header.kid || claims.iss !== 'https://appleid.apple.com' || !claims.exp || claims.exp * 1000 <= Date.now()) throw new UnauthorizedException('Invalid Apple ID token');
-    const audience = process.env.APPLE_CLIENT_ID;
+    const audience = this.configService.get<string>('APPLE_CLIENT_ID');
     if (!audience || !(Array.isArray(claims.aud) ? claims.aud : [claims.aud]).includes(audience)) throw new UnauthorizedException('Apple token audience is invalid');
     let keys: { keys: JsonWebKey[] };
     try { keys = await (await fetch('https://appleid.apple.com/auth/keys')).json() as { keys: JsonWebKey[] }; } catch { throw new InternalServerErrorException('Unable to verify Apple ID token'); }

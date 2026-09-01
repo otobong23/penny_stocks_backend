@@ -1,15 +1,14 @@
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { AppModule } from './app.module';
-import * as dotenv from 'dotenv';
 import * as bodyParser from 'body-parser';
-dotenv.config();
-
-const port = process.env.PORT || 5000;
-console.log(`Starting server on port ${port}...`)
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+  const configService = app.get(ConfigService);
+  const port = configService.get<number>('PORT', 5000);
+  console.log(`Starting server on port ${port}...`);
 
   app.use(bodyParser.json({ limit: '10mb' }));      // for JSON bodies
   app.use(bodyParser.urlencoded({ limit: '10mb', extended: true }));

@@ -6,6 +6,7 @@ import { JwtStrategy } from 'src/common/strategies/jwt.strategy';
 import ResetPasswordStrategy from 'src/common/strategies/ResetPasswordStrategy';
 import { MongooseModule } from '@nestjs/mongoose';
 import { User, UserSchema } from 'src/common/schemas/user/user.schema';
+import { ConfigService } from '@nestjs/config';
 
 @Module({
   imports: [
@@ -20,10 +21,11 @@ import { User, UserSchema } from 'src/common/schemas/user/user.schema';
     ResetPasswordStrategy,
     {
       provide: OAuth2Client,
-      useFactory: () => {
+      inject: [ConfigService],
+      useFactory: (configService: ConfigService) => {
         return new OAuth2Client({
-          clientId: process.env.GOOGLE_CLIENT_ID,
-          clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+          clientId: configService.get<string>('GOOGLE_CLIENT_ID'),
+          clientSecret: configService.get<string>('GOOGLE_CLIENT_SECRET'),
         });
       },
     }
