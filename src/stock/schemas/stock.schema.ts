@@ -12,6 +12,15 @@ export class Stock {
   @Prop({ type: Number, required: true, min: 0 })
   lastPrice!: number;
 
+  @Prop({ type: Number, min: 0 })
+  initialListingPrice?: number;
+
+  @Prop({ type: String, trim: true, maxlength: 80 })
+  category?: string;
+
+  @Prop({ type: String, trim: true, maxlength: 80 })
+  exchange?: string;
+
   @Prop({ type: Number, required: true })
   change24h!: number;
 

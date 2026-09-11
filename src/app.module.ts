@@ -12,6 +12,7 @@ import { TransactionModule } from './transaction/transaction.module';
 import { StockModule } from './stock/stock.module';
 import { CopyTradingModule } from './copy-trading/copy-trading.module';
 import { AdminModule } from './admin/admin.module';
+import { StockProposalModule } from './stock-proposal/stock-proposal.module';
 
 @Module({
   imports: [
@@ -57,6 +58,7 @@ import { AdminModule } from './admin/admin.module';
     UserModule,
     TransactionModule,
     StockModule,
+    StockProposalModule,
     CopyTradingModule,
     AdminModule,
   ],

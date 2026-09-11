@@ -6,6 +6,7 @@ import { Transaction, TransactionDocument } from '../transaction/schemas/transac
 import { TransactionStatus } from '../transaction/enum/transaction-status.enum';
 import { TransactionType } from '../transaction/enum/transaction-type.enum';
 import { BuyCopyTradingDto } from './dto/buy-copy-trading.dto';
+import { LiquidateCopyTradingDto } from './dto/liquidate-copy-trading.dto';
 import { CreateCopyTradingDto } from './dto/create-copy-trading.dto';
 import { UpdateCopyTradingDto } from './dto/update-copy-trading.dto';
 import { CopyTradePurchase, CopyTradePurchaseDocument } from './schemas/copy-trade-purchase.schema';
@@ -56,9 +57,38 @@ export class CopyTradingService {
         const user = await this.userModel.findOneAndUpdate({ _id: userId, balance: { $gte: dto.amountInvested } }, { $inc: { balance: -dto.amountInvested } }, { new: true, session });
         if (!user) throw new BadRequestException('Insufficient balance to buy this copy trade');
         const expiredAt = new Date(); expiredAt.setUTCDate(expiredAt.getUTCDate() + days);
-        const [purchase] = await this.purchaseModel.create([{ userId: user._id, copyTradingId: trade._id, traderName: trade.traderName, riskLevel: trade.riskLevel, duration: trade.duration, rateOfChange: trade.rateOfChange, averageDailyProfit: trade.averageDailyProfit, purchases: trade.purchases, totalAssets: trade.totalAssets, copyTradePrice: trade.copyTradePrice, amountInvested: dto.amountInvested, currency: trade.currency, expiredAt }], { session });
+        const [purchase] = await this.purchaseModel.create([{ userId: user._id, copyTradingId: trade._id, traderName: trade.traderName, riskLevel: trade.riskLevel, duration: trade.duration, rateOfChange: trade.rateOfChange, averageDailyProfit: trade.averageDailyProfit, purchases: trade.purchases, totalAssets: trade.totalAssets, copyTradePrice: trade.copyTradePrice, amountInvested: dto.amountInvested, currency: trade.currency, expiredAt, status: 'active' }], { session });
         const [transaction] = await this.transactionModel.create([{ userId: user._id, email: user.email, type: TransactionType.COPY_TRADE, amount: dto.amountInvested, currency: trade.currency, reference: String(purchase._id), note: `Copy trade with ${trade.traderName} for ${trade.duration}`, status: TransactionStatus.COMPLETED }], { session });
         result = { purchase, transaction };
+      });
+      return result!;
+    } finally { await session.endSession(); }
+  }
+
+  async getMyPurchases(userId: string) {
+    return this.purchaseModel.find({ userId }).sort({ createdAt: -1 }).populate('copyTradingId').lean();
+  }
+
+  async liquidate(userId: string, purchaseId: string, dto: LiquidateCopyTradingDto) {
+    const session = await this.connection.startSession();
+    let result: { purchase: CopyTradePurchaseDocument; transaction: TransactionDocument; payout: number } | undefined;
+    try {
+      await session.withTransaction(async () => {
+        const purchase = await this.purchaseModel.findOne({ _id: purchaseId, userId }).session(session);
+        if (!purchase) throw new NotFoundException('Copy-trade purchase not found');
+        if (purchase.status === 'liquidated' || purchase.liquidatedAt) throw new BadRequestException('This copy-trade purchase has already been liquidated');
+        if (purchase.expiredAt > new Date()) throw new BadRequestException('This copy trade can only be liquidated after its duration has ended');
+        // rateOfChange is stored as a percent (e.g. 5 means a 5% return) on the purchased plan snapshot.
+        const payout = Number((purchase.amountInvested * (1 + purchase.rateOfChange / 100)).toFixed(8));
+        if (payout <= 0) throw new BadRequestException('This copy trade has an invalid liquidation value');
+        purchase.status = 'liquidated';
+        purchase.liquidatedAt = new Date();
+        purchase.liquidationAmount = payout;
+        await purchase.save({ session });
+        const user = await this.userModel.findByIdAndUpdate(userId, { $inc: { balance: payout } }, { new: true, session });
+        if (!user) throw new NotFoundException('User not found');
+        const [transaction] = await this.transactionModel.create([{ userId: user._id, email: user.email, type: TransactionType.SELL, amount: payout, currency: purchase.currency, reference: String(purchase._id), note: dto.note ?? `Liquidated copy trade with ${purchase.traderName}`, status: TransactionStatus.COMPLETED }], { session });
+        result = { purchase, transaction, payout };
       });
       return result!;
     } finally { await session.endSession(); }

@@ -15,6 +15,22 @@ export class CreateStockDto {
   @Min(0)
   lastPrice!: number;
 
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber({ maxDecimalPlaces: 8 })
+  @Min(0)
+  initialListingPrice?: number;
+
+  @IsOptional()
+  @IsString()
+  @Length(1, 80)
+  category?: string;
+
+  @IsOptional()
+  @IsString()
+  @Length(1, 80)
+  exchange?: string;
+
   @Type(() => Number)
   @IsNumber({ maxDecimalPlaces: 8 })
   change24h!: number;

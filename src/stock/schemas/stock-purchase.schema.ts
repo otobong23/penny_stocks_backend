@@ -18,6 +18,17 @@ export class StockPurchase {
   @Prop({ type: Number, required: true, min: 0.000001 })
   quantity!: number;
 
+  /** Shares still owned from this purchase lot. */
+  // Intentionally no default: older documents lack this field and represent a fully open lot.
+  @Prop({ type: Number, min: 0 })
+  remainingQuantity!: number;
+
+  @Prop({ type: Number, required: true, min: 0, default: 0 })
+  soldQuantity!: number;
+
+  @Prop({ type: String, enum: ['open', 'closed'], default: 'open', index: true })
+  status!: 'open' | 'closed';
+
   @Prop({ type: Number, required: true, min: 0 })
   pricePerShare!: number;
 

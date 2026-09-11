@@ -17,6 +17,9 @@ export class CopyTradePurchase {
   @Prop({ type: Number, required: true, min: 0.01 }) amountInvested!: number;
   @Prop({ required: true }) currency!: string;
   @Prop({ type: Date, required: true, index: true }) expiredAt!: Date;
+  @Prop({ type: String, enum: ['active', 'liquidated'], default: 'active', index: true }) status!: 'active' | 'liquidated';
+  @Prop({ type: Date }) liquidatedAt?: Date;
+  @Prop({ type: Number, min: 0 }) liquidationAmount?: number;
 }
 export const CopyTradePurchaseSchema = SchemaFactory.createForClass(CopyTradePurchase);
 CopyTradePurchaseSchema.index({ userId: 1, createdAt: -1 });

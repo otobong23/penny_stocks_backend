@@ -3,6 +3,7 @@ import { CurrentUser } from '../common/decorator/current.logged.user';
 import { AdminGuard } from '../common/guards/admin.guard';
 import { JwtAuthGuard } from '../common/strategies/jwt-auth.guard';
 import { BuyStockDto } from './dto/buy-stock.dto';
+import { SellStockDto } from './dto/sell-stock.dto';
 import { CreateStockDto } from './dto/create-stock.dto';
 import { UpdateStockDto } from './dto/update-stock.dto';
 import { StockService } from './stock.service';
@@ -14,6 +15,14 @@ export class StockController {
 
   @Get()
   findAll(@Query() pagination: PaginationDto) { return this.stockService.findAll(pagination); }
+
+  @Get('me/purchases')
+  @UseGuards(JwtAuthGuard)
+  myPurchases(@CurrentUser() user: { sub: string }) { return this.stockService.getMyPurchases(user.sub); }
+
+  @Post('purchases/:purchaseId/sell')
+  @UseGuards(JwtAuthGuard)
+  sell(@CurrentUser() user: { sub: string }, @Param('purchaseId') purchaseId: string, @Body() dto: SellStockDto) { return this.stockService.sell(user.sub, purchaseId, dto); }
 
   @Get(':id')
   findOne(@Param('id') id: string) { return this.stockService.findOne(id); }
