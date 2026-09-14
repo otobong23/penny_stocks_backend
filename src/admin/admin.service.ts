@@ -10,10 +10,15 @@ import { TransactionMailService } from 'src/transaction/transaction-mail.service
 import { TransactionType } from 'src/transaction/enum/transaction-type.enum';
 import { PaymentOrderService } from '../transaction/payment-order.service';
 import { UpdatePaymentOrderDto } from './dto/update-payment-order.dto';
+import { StockPurchase, StockPurchaseDocument } from '../stock/schemas/stock-purchase.schema';
+import { CopyTradePurchase, CopyTradePurchaseDocument } from '../copy-trading/schemas/copy-trade-purchase.schema';
+import { StockProposal, StockProposalDocument } from '../stock-proposal/schemas/stock-proposal.schema';
+import { AdminCopyTradePurchaseQueryDto, AdminStockPurchaseQueryDto } from './dto/admin-purchase-query.dto';
+import { ProposalQueryDto } from '../stock-proposal/dto/proposal-query.dto';
 
 @Injectable()
 export class AdminService {
-  constructor(@InjectModel(User.name) private readonly userModel: Model<UserDocument>, @InjectModel(Transaction.name) private readonly transactionModel: Model<TransactionDocument>, private readonly transactionMailService: TransactionMailService, private readonly paymentOrderService: PaymentOrderService) { }
+  constructor(@InjectModel(User.name) private readonly userModel: Model<UserDocument>, @InjectModel(Transaction.name) private readonly transactionModel: Model<TransactionDocument>, @InjectModel(StockPurchase.name) private readonly stockPurchaseModel: Model<StockPurchaseDocument>, @InjectModel(CopyTradePurchase.name) private readonly copyTradePurchaseModel: Model<CopyTradePurchaseDocument>, @InjectModel(StockProposal.name) private readonly stockProposalModel: Model<StockProposalDocument>, private readonly transactionMailService: TransactionMailService, private readonly paymentOrderService: PaymentOrderService) { }
 
   findPaymentOrders() { return this.paymentOrderService.findAll(); }
 
@@ -36,6 +41,36 @@ export class AdminService {
   async findTransactions(pagination: PaginationDto) {
     const page = pagination.page ?? 1; const limit = pagination.limit ?? 20;
     const [data, total] = await Promise.all([this.transactionModel.find().sort({ createdAt: -1 }).skip((page - 1) * limit).limit(limit), this.transactionModel.countDocuments()]);
+    return { data, pagination: { page, limit, total, totalPages: Math.ceil(total / limit) } };
+  }
+
+  async findStockPurchases(query: AdminStockPurchaseQueryDto) {
+    const page = query.page ?? 1; const limit = query.limit ?? 20;
+    const filter = { ...(query.userId && { userId: query.userId }), ...(query.status && { status: query.status }) };
+    const [data, total] = await Promise.all([
+      this.stockPurchaseModel.find(filter).sort({ createdAt: -1 }).skip((page - 1) * limit).limit(limit).populate('userId', 'userID email firstName lastName').populate('stockId', 'name acronym').lean(),
+      this.stockPurchaseModel.countDocuments(filter),
+    ]);
+    return { data, pagination: { page, limit, total, totalPages: Math.ceil(total / limit) } };
+  }
+
+  async findCopyTradePurchases(query: AdminCopyTradePurchaseQueryDto) {
+    const page = query.page ?? 1; const limit = query.limit ?? 20;
+    const filter = { ...(query.userId && { userId: query.userId }), ...(query.status && { status: query.status }) };
+    const [data, total] = await Promise.all([
+      this.copyTradePurchaseModel.find(filter).sort({ createdAt: -1 }).skip((page - 1) * limit).limit(limit).populate('userId', 'userID email firstName lastName').populate('copyTradingId', 'traderName currency').lean(),
+      this.copyTradePurchaseModel.countDocuments(filter),
+    ]);
+    return { data, pagination: { page, limit, total, totalPages: Math.ceil(total / limit) } };
+  }
+
+  async findUserStockProposals(userId: string, query: ProposalQueryDto) {
+    const page = query.page ?? 1; const limit = query.limit ?? 20;
+    const filter = { proposedBy: userId, ...(query.status && { status: query.status }) };
+    const [data, total] = await Promise.all([
+      this.stockProposalModel.find(filter).sort({ createdAt: -1 }).skip((page - 1) * limit).limit(limit).populate('proposedBy', 'userID email firstName lastName').lean(),
+      this.stockProposalModel.countDocuments(filter),
+    ]);
     return { data, pagination: { page, limit, total, totalPages: Math.ceil(total / limit) } };
   }
 

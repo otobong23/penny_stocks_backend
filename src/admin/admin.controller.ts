@@ -8,6 +8,8 @@ import { UpdateTransactionStatusDto } from './dto/update-transaction-status.dto'
 import { UpdateUserAdministrationDto } from './dto/update-user-administration.dto';
 import { AdminService } from './admin.service';
 import { UpdatePaymentOrderDto } from './dto/update-payment-order.dto';
+import { AdminCopyTradePurchaseQueryDto, AdminStockPurchaseQueryDto, AdminUserParamsDto } from './dto/admin-purchase-query.dto';
+import { ProposalQueryDto } from '../stock-proposal/dto/proposal-query.dto';
 
 @Controller('admin')
 export class AdminController {
@@ -39,4 +41,30 @@ export class AdminController {
   @Patch('payment-orders/:id')
   @UseGuards(JwtAuthGuard, AdminGuard)
   updatePaymentOrder(@Param('id') id: string, @Body() dto: UpdatePaymentOrderDto) { return this.adminService.updatePaymentOrder(id, dto); }
+
+  @Get('stock-purchases')
+  @UseGuards(JwtAuthGuard, AdminGuard)
+  stockPurchases(@Query() query: AdminStockPurchaseQueryDto) { return this.adminService.findStockPurchases(query); }
+
+  @Get('copy-trade-purchases')
+  @UseGuards(JwtAuthGuard, AdminGuard)
+  copyTradePurchases(@Query() query: AdminCopyTradePurchaseQueryDto) { return this.adminService.findCopyTradePurchases(query); }
+
+  @Get('users/:userId/stock-purchases')
+  @UseGuards(JwtAuthGuard, AdminGuard)
+  userStockPurchases(@Param() params: AdminUserParamsDto, @Query() query: AdminStockPurchaseQueryDto) {
+    return this.adminService.findStockPurchases({ ...query, userId: params.userId });
+  }
+
+  @Get('users/:userId/copy-trade-purchases')
+  @UseGuards(JwtAuthGuard, AdminGuard)
+  userCopyTradePurchases(@Param() params: AdminUserParamsDto, @Query() query: AdminCopyTradePurchaseQueryDto) {
+    return this.adminService.findCopyTradePurchases({ ...query, userId: params.userId });
+  }
+
+  @Get('users/:userId/stock-proposals')
+  @UseGuards(JwtAuthGuard, AdminGuard)
+  userStockProposals(@Param() params: AdminUserParamsDto, @Query() query: ProposalQueryDto) {
+    return this.adminService.findUserStockProposals(params.userId, query);
+  }
 }

@@ -7,6 +7,15 @@ import { Transaction, TransactionSchema } from '../transaction/schemas/transacti
 import { AdminController } from './admin.controller';
 import { AdminService } from './admin.service';
 import { TransactionModule } from 'src/transaction/transaction.module';
+import { StockPurchase, StockPurchaseSchema } from '../stock/schemas/stock-purchase.schema';
+import { CopyTradePurchase, CopyTradePurchaseSchema } from '../copy-trading/schemas/copy-trade-purchase.schema';
+import { StockProposal, StockProposalSchema } from '../stock-proposal/schemas/stock-proposal.schema';
 
-@Module({ imports: [AuthModule, TransactionModule, MongooseModule.forFeature([{ name: User.name, schema: UserSchema }, { name: Transaction.name, schema: TransactionSchema }])], controllers: [AdminController], providers: [AdminService, AdminGuard] })
+@Module({ imports: [AuthModule, TransactionModule, MongooseModule.forFeature([
+  { name: User.name, schema: UserSchema },
+  { name: Transaction.name, schema: TransactionSchema },
+  { name: StockPurchase.name, schema: StockPurchaseSchema },
+  { name: CopyTradePurchase.name, schema: CopyTradePurchaseSchema },
+  { name: StockProposal.name, schema: StockProposalSchema },
+])], controllers: [AdminController], providers: [AdminService, AdminGuard] })
 export class AdminModule {}
