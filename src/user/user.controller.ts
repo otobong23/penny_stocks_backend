@@ -11,13 +11,13 @@ import { UserService } from './user.service';
 export class UserController {
   constructor(private readonly userService: UserService) {}
 
-  @Serialize(UserDto)
+  // @Serialize(UserDto)
   @Get('profile')
   profile(@CurrentUser() user: { sub: string }) {
     return this.userService.findUserById(user.sub);
   }
 
-  @Serialize(UserDto)
+  // @Serialize(UserDto)
   @Patch('profile')
   updateProfile(@Body() payload: UpdateUserDTO, @CurrentUser() user: { sub: string }) {
     return this.userService.updateProfile(user.sub, payload);
