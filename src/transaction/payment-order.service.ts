@@ -91,7 +91,7 @@ export class PaymentOrderService implements OnModuleInit, OnModuleDestroy {
 
   async submitDepositProof(userId: string, orderId: string, dto: SubmitPaymentProofDto) {
     await this.expireOpenOrders();
-    const order = await this.orderModel.findOne({ _id: orderId, userId, type: TransactionType.DEPOSIT });
+    const order = await this.orderModel.findOne({ _id: new Types.ObjectId(orderId), userId: new Types.ObjectId(userId), type: TransactionType.DEPOSIT });
     if (!order) throw new NotFoundException('Deposit order not found');
     if (order.status !== PaymentOrderStatus.AWAITING_PAYMENT || !order.isMethodIncluded) {
       throw new BadRequestException('Payment instructions have not been provided or this order is no longer payable');
