@@ -1,6 +1,6 @@
 import { BadRequestException, ConflictException, Injectable, Logger, NotFoundException, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import { User, UserDocument } from '../common/schemas/user/user.schema';
 import { CreateDepositOrderDto } from './dto/create-deposit-order.dto';
 import { CreateWithdrawOrderDto } from './dto/create-withdraw-order.dto';
@@ -112,7 +112,8 @@ export class PaymentOrderService implements OnModuleInit, OnModuleDestroy {
 
   async findMine(userId: string) {
     await this.expireOpenOrders();
-    return this.orderModel.find({ userId }).sort({ createdAt: -1 });
+    const orders = await this.orderModel.find({ userId: new Types.ObjectId(userId) }).sort({ createdAt: -1 });
+    return orders;
   }
 
   async findAll() {

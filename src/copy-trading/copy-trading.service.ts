@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectConnection, InjectModel } from '@nestjs/mongoose';
-import { Connection, Model } from 'mongoose';
+import { Connection, Model, Types } from 'mongoose';
 import { User, UserDocument } from '../common/schemas/user/user.schema';
 import { Transaction, TransactionDocument } from '../transaction/schemas/transaction.schema';
 import { TransactionStatus } from '../transaction/enum/transaction-status.enum';
@@ -66,7 +66,7 @@ export class CopyTradingService {
   }
 
   async getMyPurchases(userId: string) {
-    return this.purchaseModel.find({ userId }).sort({ createdAt: -1 }).populate('copyTradingId').lean();
+    return this.purchaseModel.find({ userId: new Types.ObjectId(userId) }).sort({ createdAt: -1 }).populate('copyTradingId').lean();
   }
 
   async liquidate(userId: string, purchaseId: string, dto: LiquidateCopyTradingDto) {

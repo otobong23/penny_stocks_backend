@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import { User, UserDocument } from 'src/common/schemas/user/user.schema';
 import { CreateTransactionDto } from './dto/create-transaction.dto';
 import { TransactionStatus } from './enum/transaction-status.enum';
@@ -43,7 +43,7 @@ export class TransactionService {
     const page = pagination.page ?? 1;
     const limit = pagination.limit ?? 20;
     const [data, total] = await Promise.all([
-      this.transactionModel.find({ userId }).sort({ createdAt: -1 }).skip((page - 1) * limit).limit(limit),
+      this.transactionModel.find({ userId: new Types.ObjectId(userId) }).sort({ createdAt: -1 }).skip((page - 1) * limit).limit(limit),
       this.transactionModel.countDocuments({ userId }),
     ]);
     return { data, pagination: { page, limit, total, totalPages: Math.ceil(total / limit) } };
