@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import { PaginationDto } from '../common/dto/pagination.dto';
 import { User, UserDocument } from '../common/schemas/user/user.schema';
 import { Transaction, TransactionDocument } from '../transaction/schemas/transaction.schema';
@@ -46,7 +46,7 @@ export class AdminService {
 
   async findStockPurchases(query: AdminStockPurchaseQueryDto) {
     const page = query.page ?? 1; const limit = query.limit ?? 20;
-    const filter = { ...(query.userId && { userId: query.userId }), ...(query.status && { status: query.status }) };
+    const filter = { ...(query.userId && { userId: new Types.ObjectId(query.userId) }), ...(query.status && { status: query.status }) };
     const [data, total] = await Promise.all([
       this.stockPurchaseModel.find(filter).sort({ createdAt: -1 }).skip((page - 1) * limit).limit(limit).populate('userId', 'userID email firstName lastName').populate('stockId', 'name acronym').lean(),
       this.stockPurchaseModel.countDocuments(filter),
@@ -56,7 +56,7 @@ export class AdminService {
 
   async findCopyTradePurchases(query: AdminCopyTradePurchaseQueryDto) {
     const page = query.page ?? 1; const limit = query.limit ?? 20;
-    const filter = { ...(query.userId && { userId: query.userId }), ...(query.status && { status: query.status }) };
+    const filter = { ...(query.userId && { userId: new Types.ObjectId(query.userId) }), ...(query.status && { status: query.status }) };
     const [data, total] = await Promise.all([
       this.copyTradePurchaseModel.find(filter).sort({ createdAt: -1 }).skip((page - 1) * limit).limit(limit).populate('userId', 'userID email firstName lastName').populate('copyTradingId', 'traderName currency').lean(),
       this.copyTradePurchaseModel.countDocuments(filter),
@@ -66,7 +66,7 @@ export class AdminService {
 
   async findUserStockProposals(userId: string, query: ProposalQueryDto) {
     const page = query.page ?? 1; const limit = query.limit ?? 20;
-    const filter = { proposedBy: userId, ...(query.status && { status: query.status }) };
+    const filter = { proposedBy: new Types.ObjectId(userId), ...(query.status && { status: query.status }) };
     const [data, total] = await Promise.all([
       this.stockProposalModel.find(filter).sort({ createdAt: -1 }).skip((page - 1) * limit).limit(limit).populate('proposedBy', 'userID email firstName lastName').lean(),
       this.stockProposalModel.countDocuments(filter),

@@ -44,13 +44,13 @@ export class TransactionService {
     const limit = pagination.limit ?? 20;
     const [data, total] = await Promise.all([
       this.transactionModel.find({ userId: new Types.ObjectId(userId) }).sort({ createdAt: -1 }).skip((page - 1) * limit).limit(limit),
-      this.transactionModel.countDocuments({ userId }),
+      this.transactionModel.countDocuments({ userId: new Types.ObjectId(userId) }),
     ]);
     return { data, pagination: { page, limit, total, totalPages: Math.ceil(total / limit) } };
   }
 
   async findOneMine(userId: string, transactionId: string) {
-    const transaction = await this.transactionModel.findOne({ _id: transactionId, userId });
+    const transaction = await this.transactionModel.findOne({ _id: new Types.ObjectId(transactionId), userId: new Types.ObjectId(userId) });
     if (!transaction) throw new NotFoundException('Transaction not found');
     return transaction;
   }

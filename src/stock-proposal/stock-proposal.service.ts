@@ -1,6 +1,6 @@
 import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectConnection, InjectModel } from '@nestjs/mongoose';
-import { Connection, Model } from 'mongoose';
+import { Connection, Model, Types } from 'mongoose';
 import { Stock, StockDocument } from '../stock/schemas/stock.schema';
 import { CreateStockProposalDto } from './dto/create-stock-proposal.dto';
 import { ApproveStockProposalDto } from './dto/approve-stock-proposal.dto';
@@ -26,7 +26,7 @@ export class StockProposalService {
 
   private async find(query: ProposalQueryDto & { userId?: string }) {
     const page = query.page ?? 1; const limit = query.limit ?? 20;
-    const filter = { ...(query.status && { status: query.status }), ...(query.userId && { proposedBy: query.userId }) };
+    const filter = { ...(query.status && { status: query.status }), ...(query.userId && { proposedBy: new Types.ObjectId(query.userId) }) };
     const [data, total] = await Promise.all([
       this.proposalModel.find(filter).sort({ createdAt: -1 }).skip((page - 1) * limit).limit(limit).populate('proposedBy', 'userID email firstName lastName'),
       this.proposalModel.countDocuments(filter),
@@ -64,7 +64,7 @@ export class StockProposalService {
   }
 
   async reject(adminId: string, id: string, dto: RejectStockProposalDto) {
-    const proposal = await this.proposalModel.findOneAndUpdate({ _id: id, status: ProposalStatus.PENDING }, { status: ProposalStatus.REJECTED, rejectionReason: dto.rejectionReason, reviewedBy: adminId, reviewedAt: new Date() }, { new: true });
+    const proposal = await this.proposalModel.findOneAndUpdate({ _id: new Types.ObjectId(id), status: ProposalStatus.PENDING }, { status: ProposalStatus.REJECTED, rejectionReason: dto.rejectionReason, reviewedBy: new Types.ObjectId(adminId), reviewedAt: new Date() }, { new: true });
     if (!proposal) throw new NotFoundException('Pending stock proposal not found');
     return proposal;
   }

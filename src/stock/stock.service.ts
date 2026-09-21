@@ -68,7 +68,7 @@ export class StockService {
         if (!stock) throw new NotFoundException('Stock not found');
         const totalAmount = Number((stock.lastPrice * dto.quantity).toFixed(8));
         if (totalAmount <= 0) throw new BadRequestException('Stock purchase total must be greater than zero');
-        const user = await this.userModel.findOneAndUpdate({ _id: userId, balance: { $gte: totalAmount } }, { $inc: { balance: -totalAmount } }, { new: true, session });
+        const user = await this.userModel.findOneAndUpdate({ _id: new Types.ObjectId(userId), balance: { $gte: totalAmount } }, { $inc: { balance: -totalAmount } }, { new: true, session });
         if (!user) throw new BadRequestException('Insufficient balance to buy this stock');
         const [purchase] = await this.purchaseModel.create([{ userId: user._id, stockId: stock._id, stockName: stock.name, stockAcronym: stock.acronym, quantity: dto.quantity, remainingQuantity: dto.quantity, soldQuantity: 0, status: 'open', pricePerShare: stock.lastPrice, totalAmount, currency: stock.currency }], { session });
         const [transaction] = await this.transactionModel.create([{ userId: user._id, email: user.email, type: TransactionType.BUY, amount: totalAmount, currency: stock.currency, reference: String(purchase._id), note: `Bought ${dto.quantity} ${stock.acronym} shares at ${stock.lastPrice}` , status: TransactionStatus.COMPLETED }], { session });
@@ -87,7 +87,7 @@ export class StockService {
     let result: { purchase: StockPurchaseDocument; transaction: TransactionDocument; proceeds: number } | undefined;
     try {
       await session.withTransaction(async () => {
-        const purchase = await this.purchaseModel.findOne({ _id: purchaseId, userId }).session(session);
+        const purchase = await this.purchaseModel.findOne({ _id: new Types.ObjectId(purchaseId), userId: new Types.ObjectId(userId) }).session(session);
         if (!purchase) throw new NotFoundException('Stock purchase not found');
         // Purchases created before this field existed are treated as wholly open.
         const remaining = purchase.remainingQuantity ?? purchase.quantity;

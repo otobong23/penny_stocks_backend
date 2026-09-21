@@ -56,7 +56,7 @@ export class PaymentOrderService implements OnModuleInit, OnModuleDestroy {
 
   private async assertNoOpenOrder(userId: string) {
     await this.expireOpenOrders();
-    const existing = await this.orderModel.exists({ userId, status: { $in: OPEN_ORDER_STATUSES }, expiresAt: { $gt: new Date() } });
+    const existing = await this.orderModel.exists({ userId: new Types.ObjectId(userId), status: { $in: OPEN_ORDER_STATUSES }, expiresAt: { $gt: new Date() } });
     if (existing) throw new ConflictException('You already have a pending deposit or withdrawal order');
   }
 
@@ -123,7 +123,7 @@ export class PaymentOrderService implements OnModuleInit, OnModuleDestroy {
 
   async updateByAdmin(orderId: string, methodDetails?: string, status?: PaymentOrderStatus.COMPLETED | PaymentOrderStatus.REJECTED) {
     await this.expireOpenOrders();
-    const order = await this.orderModel.findById(orderId);
+    const order = await this.orderModel.findById(new Types.ObjectId(orderId));
     if (!order) throw new NotFoundException('Payment order not found');
     if (order.expiresAt <= new Date() || !OPEN_ORDER_STATUSES.includes(order.status)) throw new BadRequestException('This order is no longer active');
 

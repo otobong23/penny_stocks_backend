@@ -36,7 +36,7 @@ export class CopyTradingService {
   create(dto: CreateCopyTradingDto) { return this.copyTradingModel.create(dto); }
 
   async getPortfolio(userId: string) {
-    const portfolio = await this.portfolioModel.findOne({ userId });
+    const portfolio = await this.portfolioModel.findOne({ userId: new Types.ObjectId(userId) });
     if (portfolio) return portfolio;
     const user = await this.userModel.findById(userId).select('_id');
     if (!user) throw new NotFoundException('User not found');
@@ -53,7 +53,7 @@ export class CopyTradingService {
     try {
       await session.withTransaction(async () => {
         const user = await this.userModel.findOneAndUpdate(
-          { _id: userId, balance: { $gte: dto.amount } },
+          { _id: new Types.ObjectId(userId), balance: { $gte: dto.amount } },
           { $inc: { balance: -dto.amount } },
           { new: true, session },
         );
@@ -80,7 +80,7 @@ export class CopyTradingService {
     try {
       await session.withTransaction(async () => {
         const portfolio = await this.portfolioModel.findOneAndUpdate(
-          { userId, balance: { $gte: dto.amount } },
+          { userId: new Types.ObjectId(userId), balance: { $gte: dto.amount } },
           { $inc: { balance: -dto.amount, totalWithdrawn: dto.amount } },
           { new: true, session },
         );
@@ -120,7 +120,7 @@ export class CopyTradingService {
         const days = Number.parseInt(trade.duration, 10);
         if (!Number.isFinite(days) || days < 1) throw new BadRequestException('Copy-trading plan has an invalid duration');
         const portfolio = await this.portfolioModel.findOneAndUpdate(
-          { userId, balance: { $gte: dto.amountInvested } },
+          { userId: new Types.ObjectId(userId), balance: { $gte: dto.amountInvested } },
           { $inc: { balance: -dto.amountInvested, totalInvested: dto.amountInvested } },
           { new: true, session },
         );
@@ -146,7 +146,7 @@ export class CopyTradingService {
     let result: { purchase: CopyTradePurchaseDocument; transaction: TransactionDocument; payout: number; fee: number } | undefined;
     try {
       await session.withTransaction(async () => {
-        const purchase = await this.purchaseModel.findOne({ _id: purchaseId, userId }).session(session);
+        const purchase = await this.purchaseModel.findOne({ _id: new Types.ObjectId(purchaseId), userId: new Types.ObjectId(userId) }).session(session);
         if (!purchase) throw new NotFoundException('Copy-trade purchase not found');
         if (purchase.status === 'liquidated' || purchase.liquidatedAt) throw new BadRequestException('This copy-trade purchase has already been liquidated');
         if (purchase.expiredAt > new Date()) throw new BadRequestException('This copy trade can only be liquidated after its duration has ended');
@@ -161,7 +161,7 @@ export class CopyTradingService {
         purchase.liquidationFee = fee;
         await purchase.save({ session });
         const portfolio = await this.portfolioModel.findOneAndUpdate(
-          { userId }, { $inc: { balance: payout, totalLiquidated: payout } }, { new: true, session },
+          { userId: new Types.ObjectId(userId) }, { $inc: { balance: payout, totalLiquidated: payout } }, { new: true, session },
         );
         if (!portfolio) throw new NotFoundException('Copy-trading portfolio not found');
         const user = await this.userModel.findById(userId).session(session);
