@@ -7,11 +7,15 @@ import { LiquidateCopyTradingDto } from './dto/liquidate-copy-trading.dto';
 import { CreateCopyTradingDto } from './dto/create-copy-trading.dto';
 import { UpdateCopyTradingDto } from './dto/update-copy-trading.dto';
 import { CopyTradingService } from './copy-trading.service';
+import { CopyTradingPortfolioTransferDto } from './dto/copy-trading-portfolio-transfer.dto';
 
 @Controller('copy-trading')
 export class CopyTradingController {
   constructor(private readonly copyTradingService: CopyTradingService) {}
   @Get() findAll() { return this.copyTradingService.findAll(); }
+  @Get('portfolio/me') @UseGuards(JwtAuthGuard) myPortfolio(@CurrentUser() user: { sub: string }) { return this.copyTradingService.getPortfolio(user.sub); }
+  @Post('portfolio/deposit') @UseGuards(JwtAuthGuard) deposit(@CurrentUser() user: { sub: string }, @Body() dto: CopyTradingPortfolioTransferDto) { return this.copyTradingService.depositToPortfolio(user.sub, dto); }
+  @Post('portfolio/withdraw') @UseGuards(JwtAuthGuard) withdraw(@CurrentUser() user: { sub: string }, @Body() dto: CopyTradingPortfolioTransferDto) { return this.copyTradingService.withdrawFromPortfolio(user.sub, dto); }
   @Get('me/purchases') @UseGuards(JwtAuthGuard) myPurchases(@CurrentUser() user: { sub: string }) { return this.copyTradingService.getMyPurchases(user.sub); }
   @Get(':id') findOne(@Param('id') id: string) { return this.copyTradingService.findOne(id); }
   @Post(':id/buy') @UseGuards(JwtAuthGuard) buy(@CurrentUser() user: { sub: string }, @Param('id') id: string, @Body() dto: BuyCopyTradingDto) { return this.copyTradingService.buy(user.sub, id, dto); }

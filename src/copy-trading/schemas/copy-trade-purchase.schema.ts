@@ -13,13 +13,15 @@ export class CopyTradePurchase {
   @Prop({ type: Number, required: true }) averageDailyProfit!: number;
   @Prop({ type: Number, required: true, min: 0 }) purchases!: number;
   @Prop({ type: Number, required: true, min: 0 }) totalAssets!: number;
-  @Prop({ type: Number, required: true, min: 0.01 }) copyTradePrice!: number;
+  /** Percentage fee snapshot, deducted when this position is liquidated. */
+  @Prop({ type: Number, required: true, default: 0, min: 0, max: 100 }) percentage!: number;
   @Prop({ type: Number, required: true, min: 0.01 }) amountInvested!: number;
   @Prop({ required: true }) currency!: string;
   @Prop({ type: Date, required: true, index: true }) expiredAt!: Date;
   @Prop({ type: String, enum: ['active', 'liquidated'], default: 'active', index: true }) status!: 'active' | 'liquidated';
   @Prop({ type: Date }) liquidatedAt?: Date;
   @Prop({ type: Number, min: 0 }) liquidationAmount?: number;
+  @Prop({ type: Number, min: 0 }) liquidationFee?: number;
 }
 export const CopyTradePurchaseSchema = SchemaFactory.createForClass(CopyTradePurchase);
 CopyTradePurchaseSchema.index({ userId: 1, createdAt: -1 });

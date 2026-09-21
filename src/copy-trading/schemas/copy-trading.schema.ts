@@ -11,7 +11,8 @@ export class CopyTrading {
   @Prop({ type: Number, required: true }) averageDailyProfit!: number;
   @Prop({ type: Number, required: true, min: 0 }) purchases!: number;
   @Prop({ type: Number, required: true, min: 0 }) totalAssets!: number;
-  @Prop({ type: Number, required: true, min: 0.01 }) copyTradePrice!: number;
+  /** Percentage deducted from the gross liquidation value. */
+  @Prop({ type: Number, required: true, default: 0, min: 0, max: 100 }) percentage!: number;
   @Prop({ default: 'USD', uppercase: true, trim: true }) currency!: string;
 }
 export const CopyTradingSchema = SchemaFactory.createForClass(CopyTrading);
