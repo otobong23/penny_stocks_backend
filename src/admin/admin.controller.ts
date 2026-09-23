@@ -55,9 +55,9 @@ export class AdminController {
   @UseGuards(JwtAuthGuard, AdminGuard)
   copyTradingPortfolios(@Query() pagination: PaginationDto) { return this.adminService.findCopyTradingPortfolios(pagination); }
 
-  @Get('copy-trading-portfolios/:id')
+  @Get('copy-trading-portfolios/:userId')
   @UseGuards(JwtAuthGuard, AdminGuard)
-  copyTradingPortfolio(@Param('id') id: string) { return this.adminService.findCopyTradingPortfolio(id); }
+  copyTradingPortfolio(@Param('userId') userId: string) { return this.adminService.findCopyTradingPortfolio(userId); }
 
   @Patch('copy-trading-portfolios/:id')
   @UseGuards(JwtAuthGuard, AdminGuard)

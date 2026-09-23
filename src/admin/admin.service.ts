@@ -75,14 +75,15 @@ export class AdminService {
     return { data, pagination: { page, limit, total, totalPages: Math.ceil(total / limit) } };
   }
 
-  async findCopyTradingPortfolio(id: string) {
-    const portfolio = await this.copyTradingPortfolioModel.findById(id).populate('userId', 'userID email firstName lastName').lean();
+  async findCopyTradingPortfolio(userId: string) {
+    const portfolio = await this.copyTradingPortfolioModel.findOne({ userId: new Types.ObjectId(userId) });
     if (!portfolio) throw new NotFoundException('Copy-trading portfolio not found');
     return portfolio;
   }
 
   async updateCopyTradingPortfolio(id: string, dto: UpdateCopyTradingPortfolioDto) {
-    const portfolio = await this.copyTradingPortfolioModel.findByIdAndUpdate(id, dto, { new: true, runValidators: true }).populate('userId', 'userID email firstName lastName');
+    // const portfolio = await this.copyTradingPortfolioModel.findByIdAndUpdate(id, dto, { returnDocument: 'after', runValidators: true }).populate('userId', 'userID email firstName lastName');
+    const portfolio = await this.copyTradingPortfolioModel.findByIdAndUpdate(id, dto, { returnDocument: 'after', runValidators: true });
     if (!portfolio) throw new NotFoundException('Copy-trading portfolio not found');
     return portfolio;
   }
