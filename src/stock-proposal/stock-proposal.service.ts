@@ -26,7 +26,7 @@ export class StockProposalService {
 
   private async find(query: ProposalQueryDto & { userId?: string }) {
     const page = query.page ?? 1; const limit = query.limit ?? 20;
-    const filter = { ...(query.status && { status: query.status }), ...(query.userId && { proposedBy: new Types.ObjectId(query.userId) }) };
+    const filter = { ...(query.status && { status: query.status }), ...(query.userId && { proposedBy: query.userId }) };
     const [data, total] = await Promise.all([
       this.proposalModel.find(filter).sort({ createdAt: -1 }).skip((page - 1) * limit).limit(limit).populate('proposedBy', 'userID email firstName lastName'),
       this.proposalModel.countDocuments(filter),

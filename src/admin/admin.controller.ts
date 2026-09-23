@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
 import { AdminGuard } from '../common/guards/admin.guard';
 import { JwtAuthGuard } from '../common/strategies/jwt-auth.guard';
 import { LoginDto } from '../auth/dto/auth.dto';
@@ -10,6 +10,7 @@ import { AdminService } from './admin.service';
 import { UpdatePaymentOrderDto } from './dto/update-payment-order.dto';
 import { AdminCopyTradePurchaseQueryDto, AdminStockPurchaseQueryDto, AdminUserParamsDto } from './dto/admin-purchase-query.dto';
 import { ProposalQueryDto } from '../stock-proposal/dto/proposal-query.dto';
+import { UpdateCopyTradingPortfolioDto } from './dto/update-copy-trading-portfolio.dto';
 
 @Controller('admin')
 export class AdminController {
@@ -49,6 +50,24 @@ export class AdminController {
   @Get('copy-trade-purchases')
   @UseGuards(JwtAuthGuard, AdminGuard)
   copyTradePurchases(@Query() query: AdminCopyTradePurchaseQueryDto) { return this.adminService.findCopyTradePurchases(query); }
+
+  @Get('copy-trading-portfolios')
+  @UseGuards(JwtAuthGuard, AdminGuard)
+  copyTradingPortfolios(@Query() pagination: PaginationDto) { return this.adminService.findCopyTradingPortfolios(pagination); }
+
+  @Get('copy-trading-portfolios/:id')
+  @UseGuards(JwtAuthGuard, AdminGuard)
+  copyTradingPortfolio(@Param('id') id: string) { return this.adminService.findCopyTradingPortfolio(id); }
+
+  @Patch('copy-trading-portfolios/:id')
+  @UseGuards(JwtAuthGuard, AdminGuard)
+  updateCopyTradingPortfolio(@Param('id') id: string, @Body() dto: UpdateCopyTradingPortfolioDto) {
+    return this.adminService.updateCopyTradingPortfolio(id, dto);
+  }
+
+  @Delete('copy-trading-portfolios/:id')
+  @UseGuards(JwtAuthGuard, AdminGuard)
+  removeCopyTradingPortfolio(@Param('id') id: string) { return this.adminService.removeCopyTradingPortfolio(id); }
 
   @Get('users/:userId/stock-purchases')
   @UseGuards(JwtAuthGuard, AdminGuard)

@@ -14,7 +14,7 @@ async function bootstrap() {
   app.use(bodyParser.urlencoded({ limit: '10mb', extended: true }));
 
   app.enableCors({
-    origin: ['https://pennystocksmarketplace.com','http://localhost:3000','http://localhost:3001'], // allow requests from your frontend
+    origin: ['https://pennystocksmarketplace.com','http://localhost:3000','http://localhost:3001', 'https://pennystocks-one.vercel.app/'], // allow requests from your frontend
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     credentials: true,               // allow cookies/auth headers if needed
   });
