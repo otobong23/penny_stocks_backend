@@ -35,7 +35,7 @@ export class AdminService {
   }
 
   async updateUser(id: string, dto: UpdateUserAdministrationDto) {
-    const user = await this.userModel.findByIdAndUpdate(id, dto, { new: true, runValidators: true }).select('-password -refreshToken');
+    const user = await this.userModel.findByIdAndUpdate(id, dto, { returnDocument: 'after', runValidators: true }).select('-password -refreshToken');
     if (!user) throw new NotFoundException('User not found');
     return user;
   }
