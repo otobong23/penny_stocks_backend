@@ -141,6 +141,47 @@ export class CopyTradingService {
     return this.purchaseModel.find({ userId: new Types.ObjectId(userId) }).sort({ createdAt: -1 }).populate('copyTradingId').lean();
   }
 
+  async addFunds(userId: string, purchaseId: string, dto: BuyCopyTradingDto) {
+    const session = await this.connection.startSession();
+    let result: { purchase: CopyTradePurchaseDocument; transaction: TransactionDocument } | undefined;
+    try {
+      await session.withTransaction(async () => {
+        const purchase = await this.purchaseModel.findOne({
+          _id: new Types.ObjectId(purchaseId),
+          userId: new Types.ObjectId(userId),
+        }).session(session);
+        if (!purchase) throw new NotFoundException('Copy-trade purchase not found');
+        if (purchase.status !== 'active' || purchase.liquidatedAt) {
+          throw new BadRequestException('Funds can only be added to an active copy-trade purchase');
+        }
+
+        const portfolio = await this.portfolioModel.findOneAndUpdate(
+          { userId: new Types.ObjectId(userId), balance: { $gte: dto.amountInvested }, currency: purchase.currency },
+          { $inc: { balance: -dto.amountInvested, totalInvested: dto.amountInvested } },
+          { new: true, session },
+        );
+        if (!portfolio) {
+          const existingPortfolio = await this.portfolioModel.findOne({ userId: new Types.ObjectId(userId) }).session(session);
+          if (!existingPortfolio) throw new NotFoundException('Copy-trading portfolio not found');
+          if (existingPortfolio.currency !== purchase.currency) throw new BadRequestException('Copy-trade purchase currency does not match portfolio currency');
+          throw new BadRequestException('Insufficient copy-trading portfolio balance');
+        }
+
+        purchase.amountInvested = Number((purchase.amountInvested + dto.amountInvested).toFixed(2));
+        await purchase.save({ session });
+        const user = await this.userModel.findById(userId).session(session);
+        if (!user) throw new NotFoundException('User not found');
+        const [transaction] = await this.transactionModel.create([{
+          userId: user._id, email: user.email, type: TransactionType.COPY_TRADE_ADD_FUNDS,
+          amount: dto.amountInvested, currency: purchase.currency, reference: String(purchase._id),
+          note: `Added funds to copy trade with ${purchase.traderName}`, status: TransactionStatus.COMPLETED,
+        }], { session });
+        result = { purchase, transaction };
+      });
+      return result!;
+    } finally { await session.endSession(); }
+  }
+
   async liquidate(userId: string, purchaseId: string, dto: LiquidateCopyTradingDto) {
     const session = await this.connection.startSession();
     let result: { purchase: CopyTradePurchaseDocument; transaction: TransactionDocument; payout: number; fee: number } | undefined;
@@ -149,7 +190,7 @@ export class CopyTradingService {
         const purchase = await this.purchaseModel.findOne({ _id: new Types.ObjectId(purchaseId), userId: new Types.ObjectId(userId) }).session(session);
         if (!purchase) throw new NotFoundException('Copy-trade purchase not found');
         if (purchase.status === 'liquidated' || purchase.liquidatedAt) throw new BadRequestException('This copy-trade purchase has already been liquidated');
-        if (purchase.expiredAt > new Date()) throw new BadRequestException('This copy trade can only be liquidated after its duration has ended');
+        // if (purchase.expiredAt > new Date()) throw new BadRequestException('This copy trade can only be liquidated after its duration has ended');
         // The PNL is maintained by the trading process and is the current value to liquidate.
         const grossPayout = Number(purchase.pnl.toFixed(8));
         const fee = Number((grossPayout * (purchase.percentage / 100)).toFixed(8));
