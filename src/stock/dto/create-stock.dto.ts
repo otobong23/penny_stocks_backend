@@ -31,6 +31,10 @@ export class CreateStockDto {
   @Length(1, 80)
   exchange?: string;
 
+  @IsOptional()
+  @IsString()
+  description?: string;
+
   @Type(() => Number)
   @IsNumber({ maxDecimalPlaces: 8 })
   change24h!: number;

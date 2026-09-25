@@ -6,9 +6,11 @@ import { RiskLevel } from '../dto/create-copy-trading.dto';
 export class CopyTrading {
   @Prop({ required: true, trim: true }) traderName!: string;
   @Prop({ type: String, enum: RiskLevel, required: true }) riskLevel!: RiskLevel;
-  @Prop({ type: Number, required: true }) rateOfChange!: number;
+  @Prop({ type: Number, required: true }) leverage!: number;
+  @Prop({ type: Number, required: true, min: 0, max: 100 }) winrate!: number;
+  @Prop({ type: String, trim: true }) country?: string;
+  @Prop({ type: [Number], default: [] }) last_10_trades!: number[];
   @Prop({ required: true }) duration!: string;
-  @Prop({ type: Number, required: true }) averageDailyProfit!: number;
   @Prop({ type: Number, required: true, min: 0 }) purchases!: number;
   @Prop({ type: Number, required: true, min: 0 }) totalAssets!: number;
   /** Percentage deducted from the gross liquidation value. */

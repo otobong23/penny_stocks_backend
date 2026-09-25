@@ -11,6 +11,8 @@ import { UpdatePaymentOrderDto } from './dto/update-payment-order.dto';
 import { AdminCopyTradePurchaseQueryDto, AdminStockPurchaseQueryDto, AdminUserParamsDto } from './dto/admin-purchase-query.dto';
 import { ProposalQueryDto } from '../stock-proposal/dto/proposal-query.dto';
 import { UpdateCopyTradingPortfolioDto } from './dto/update-copy-trading-portfolio.dto';
+import { UpdateCopyTradingDto } from '../copy-trading/dto/update-copy-trading.dto';
+import { UpdateCopyTradePurchaseDto } from './dto/update-copy-trade-purchase.dto';
 
 @Controller('admin')
 export class AdminController {
@@ -50,6 +52,18 @@ export class AdminController {
   @Get('copy-trade-purchases')
   @UseGuards(JwtAuthGuard, AdminGuard)
   copyTradePurchases(@Query() query: AdminCopyTradePurchaseQueryDto) { return this.adminService.findCopyTradePurchases(query); }
+
+  @Patch('copy-trade-purchases/:id')
+  @UseGuards(JwtAuthGuard, AdminGuard)
+  updateCopyTradePurchase(@Param('id') id: string, @Body() dto: UpdateCopyTradePurchaseDto) {
+    return this.adminService.updateCopyTradePurchase(id, dto);
+  }
+
+  @Patch('copy-trading/:id')
+  @UseGuards(JwtAuthGuard, AdminGuard)
+  updateCopyTrading(@Param('id') id: string, @Body() dto: UpdateCopyTradingDto) {
+    return this.adminService.updateCopyTrading(id, dto);
+  }
 
   @Get('copy-trading-portfolios')
   @UseGuards(JwtAuthGuard, AdminGuard)

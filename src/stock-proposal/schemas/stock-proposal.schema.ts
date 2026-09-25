@@ -9,6 +9,7 @@ export class StockProposal {
   @Prop({ type: String, required: true, uppercase: true, trim: true, maxlength: 12, index: true }) ticker!: string;
   @Prop({ type: String, required: true, trim: true, maxlength: 80 }) category!: string;
   @Prop({ type: String, required: true, trim: true, maxlength: 80 }) exchange!: string;
+  @Prop({ type: String, trim: true }) description?: string;
   @Prop({ type: Number, required: true, min: 0 }) initialListingPrice!: number;
   @Prop({ type: Number, default: 0 }) change24h!: number;
   @Prop({ type: Number, default: 0 }) rateOfChange!: number;

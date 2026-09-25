@@ -21,6 +21,9 @@ export class Stock {
   @Prop({ type: String, trim: true, maxlength: 80 })
   exchange?: string;
 
+  @Prop({ type: String, trim: true })
+  description?: string;
+
   @Prop({ type: Number, required: true })
   change24h!: number;
 

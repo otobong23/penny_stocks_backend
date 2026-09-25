@@ -9,8 +9,9 @@ export class CopyTradePurchase {
   @Prop({ required: true }) traderName!: string;
   @Prop({ type: String, enum: RiskLevel, required: true }) riskLevel!: RiskLevel;
   @Prop({ required: true }) duration!: string;
-  @Prop({ type: Number, required: true }) rateOfChange!: number;
-  @Prop({ type: Number, required: true }) averageDailyProfit!: number;
+  @Prop({ type: Number, required: true }) leverage!: number;
+  @Prop({ type: Number, required: true, min: 0, max: 100 }) winrate!: number;
+  @Prop({ type: Number, default: 0 }) pnl!: number;
   @Prop({ type: Number, required: true, min: 0 }) purchases!: number;
   @Prop({ type: Number, required: true, min: 0 }) totalAssets!: number;
   /** Percentage fee snapshot, deducted when this position is liquidated. */

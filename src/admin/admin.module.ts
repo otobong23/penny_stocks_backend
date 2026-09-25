@@ -9,6 +9,7 @@ import { AdminService } from './admin.service';
 import { TransactionModule } from 'src/transaction/transaction.module';
 import { StockPurchase, StockPurchaseSchema } from '../stock/schemas/stock-purchase.schema';
 import { CopyTradePurchase, CopyTradePurchaseSchema } from '../copy-trading/schemas/copy-trade-purchase.schema';
+import { CopyTrading, CopyTradingSchema } from '../copy-trading/schemas/copy-trading.schema';
 import { StockProposal, StockProposalSchema } from '../stock-proposal/schemas/stock-proposal.schema';
 import { CopyTradingPortfolio, CopyTradingPortfolioSchema } from '../copy-trading/schemas/copy-trading-portfolio.schema';
 
@@ -17,6 +18,7 @@ import { CopyTradingPortfolio, CopyTradingPortfolioSchema } from '../copy-tradin
   { name: Transaction.name, schema: TransactionSchema },
   { name: StockPurchase.name, schema: StockPurchaseSchema },
   { name: CopyTradePurchase.name, schema: CopyTradePurchaseSchema },
+  { name: CopyTrading.name, schema: CopyTradingSchema },
   { name: StockProposal.name, schema: StockProposalSchema },
   { name: CopyTradingPortfolio.name, schema: CopyTradingPortfolioSchema },
 ])], controllers: [AdminController], providers: [AdminService, AdminGuard] })

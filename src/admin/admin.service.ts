@@ -17,10 +17,13 @@ import { AdminCopyTradePurchaseQueryDto, AdminStockPurchaseQueryDto } from './dt
 import { ProposalQueryDto } from '../stock-proposal/dto/proposal-query.dto';
 import { CopyTradingPortfolio, CopyTradingPortfolioDocument } from '../copy-trading/schemas/copy-trading-portfolio.schema';
 import { UpdateCopyTradingPortfolioDto } from './dto/update-copy-trading-portfolio.dto';
+import { CopyTrading, CopyTradingDocument } from '../copy-trading/schemas/copy-trading.schema';
+import { UpdateCopyTradingDto } from '../copy-trading/dto/update-copy-trading.dto';
+import { UpdateCopyTradePurchaseDto } from './dto/update-copy-trade-purchase.dto';
 
 @Injectable()
 export class AdminService {
-  constructor(@InjectModel(User.name) private readonly userModel: Model<UserDocument>, @InjectModel(Transaction.name) private readonly transactionModel: Model<TransactionDocument>, @InjectModel(StockPurchase.name) private readonly stockPurchaseModel: Model<StockPurchaseDocument>, @InjectModel(CopyTradePurchase.name) private readonly copyTradePurchaseModel: Model<CopyTradePurchaseDocument>, @InjectModel(StockProposal.name) private readonly stockProposalModel: Model<StockProposalDocument>, @InjectModel(CopyTradingPortfolio.name) private readonly copyTradingPortfolioModel: Model<CopyTradingPortfolioDocument>, private readonly transactionMailService: TransactionMailService, private readonly paymentOrderService: PaymentOrderService) { }
+  constructor(@InjectModel(User.name) private readonly userModel: Model<UserDocument>, @InjectModel(Transaction.name) private readonly transactionModel: Model<TransactionDocument>, @InjectModel(StockPurchase.name) private readonly stockPurchaseModel: Model<StockPurchaseDocument>, @InjectModel(CopyTradePurchase.name) private readonly copyTradePurchaseModel: Model<CopyTradePurchaseDocument>, @InjectModel(CopyTrading.name) private readonly copyTradingModel: Model<CopyTradingDocument>, @InjectModel(StockProposal.name) private readonly stockProposalModel: Model<StockProposalDocument>, @InjectModel(CopyTradingPortfolio.name) private readonly copyTradingPortfolioModel: Model<CopyTradingPortfolioDocument>, private readonly transactionMailService: TransactionMailService, private readonly paymentOrderService: PaymentOrderService) { }
 
   findPaymentOrders() { return this.paymentOrderService.findAll(); }
 
@@ -64,6 +67,18 @@ export class AdminService {
       this.copyTradePurchaseModel.countDocuments(filter),
     ]);
     return { data, pagination: { page, limit, total, totalPages: Math.ceil(total / limit) } };
+  }
+
+  async updateCopyTrading(id: string, dto: UpdateCopyTradingDto) {
+    const trade = await this.copyTradingModel.findByIdAndUpdate(id, dto, { new: true, runValidators: true });
+    if (!trade) throw new NotFoundException('Copy-trading plan not found');
+    return trade;
+  }
+
+  async updateCopyTradePurchase(id: string, dto: UpdateCopyTradePurchaseDto) {
+    const purchase = await this.copyTradePurchaseModel.findByIdAndUpdate(id, dto, { new: true, runValidators: true });
+    if (!purchase) throw new NotFoundException('Copy-trade purchase not found');
+    return purchase;
   }
 
   async findCopyTradingPortfolios(pagination: PaginationDto) {

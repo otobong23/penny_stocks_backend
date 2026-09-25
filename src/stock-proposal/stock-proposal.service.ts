@@ -47,7 +47,8 @@ export class StockProposalService {
         if (existing) throw new ConflictException('A stock with this ticker already exists');
         const [stock] = await this.stockModel.create([{
           name: dto.companyName ?? proposal.companyName, acronym, category: dto.category ?? proposal.category,
-          exchange: dto.exchange ?? proposal.exchange, initialListingPrice: dto.initialListingPrice ?? proposal.initialListingPrice,
+            exchange: dto.exchange ?? proposal.exchange, description: dto.description ?? proposal.description,
+          initialListingPrice: dto.initialListingPrice ?? proposal.initialListingPrice,
           lastPrice: dto.lastPrice ?? dto.initialListingPrice ?? proposal.initialListingPrice,
           change24h: dto.change24h ?? proposal.change24h, rateOfChange: dto.rateOfChange ?? proposal.rateOfChange,
           currency: (dto.currency ?? proposal.currency).toUpperCase(),

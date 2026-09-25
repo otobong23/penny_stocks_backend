@@ -129,7 +129,7 @@ export class CopyTradingService {
         const user = await this.userModel.findById(userId).session(session);
         if (!user) throw new NotFoundException('User not found');
         const expiredAt = new Date(); expiredAt.setUTCDate(expiredAt.getUTCDate() + days);
-        const [purchase] = await this.purchaseModel.create([{ userId: user._id, copyTradingId: trade._id, traderName: trade.traderName, riskLevel: trade.riskLevel, duration: trade.duration, rateOfChange: trade.rateOfChange, averageDailyProfit: trade.averageDailyProfit, purchases: trade.purchases, totalAssets: trade.totalAssets, percentage: trade.percentage, amountInvested: dto.amountInvested, currency: trade.currency, expiredAt, status: 'active' }], { session });
+        const [purchase] = await this.purchaseModel.create([{ userId: user._id, copyTradingId: trade._id, traderName: trade.traderName, riskLevel: trade.riskLevel, duration: trade.duration, leverage: trade.leverage, winrate: trade.winrate, pnl: 0, purchases: trade.purchases, totalAssets: trade.totalAssets, percentage: trade.percentage, amountInvested: dto.amountInvested, currency: trade.currency, expiredAt, status: 'active' }], { session });
         const [transaction] = await this.transactionModel.create([{ userId: user._id, email: user.email, type: TransactionType.COPY_TRADE, amount: dto.amountInvested, currency: trade.currency, reference: String(purchase._id), note: `Copy trade with ${trade.traderName} for ${trade.duration}`, status: TransactionStatus.COMPLETED }], { session });
         result = { purchase, transaction };
       });
@@ -150,8 +150,8 @@ export class CopyTradingService {
         if (!purchase) throw new NotFoundException('Copy-trade purchase not found');
         if (purchase.status === 'liquidated' || purchase.liquidatedAt) throw new BadRequestException('This copy-trade purchase has already been liquidated');
         if (purchase.expiredAt > new Date()) throw new BadRequestException('This copy trade can only be liquidated after its duration has ended');
-        // Calculate the trade's gross return, then deduct its percentage fee before crediting the portfolio.
-        const grossPayout = Number((purchase.amountInvested * (1 + purchase.rateOfChange / 100)).toFixed(8));
+        // The PNL is maintained by the trading process and is the current value to liquidate.
+        const grossPayout = Number(purchase.pnl.toFixed(8));
         const fee = Number((grossPayout * (purchase.percentage / 100)).toFixed(8));
         const payout = Number((grossPayout - fee).toFixed(8));
         if (payout <= 0) throw new BadRequestException('This copy trade has an invalid liquidation value');

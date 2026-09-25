@@ -7,6 +7,7 @@ export class ApproveStockProposalDto {
   @IsOptional() @IsString() @Length(1, 12) ticker?: string;
   @IsOptional() @IsString() @Length(1, 80) category?: string;
   @IsOptional() @IsString() @Length(1, 80) exchange?: string;
+  @IsOptional() @IsString() description?: string;
   @IsOptional() @Type(() => Number) @IsNumber({ maxDecimalPlaces: 8 }) @Min(0) initialListingPrice?: number;
   @IsOptional() @Type(() => Number) @IsNumber({ maxDecimalPlaces: 8 }) @Min(0) lastPrice?: number;
   @IsOptional() @Type(() => Number) @IsNumber({ maxDecimalPlaces: 8 }) change24h?: number;
